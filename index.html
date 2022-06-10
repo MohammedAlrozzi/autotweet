@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>GH Twitter Queue Manager</title>
+</head>
+<body onload="init()">
+
+<style>
+a:link { text-decoration: none; }
+a:visited { text-decoration: none; }
+a:hover { text-decoration: none; }
+a:active { text-decoration: none; }	
+
+.grid {
+	vertical-align: top;
+}
+
+body {
+  background-color: #cccccc
+}
+
+.center {
+  margin: auto;
+  width: 50%;
+  min-width: 400px;
+  max-width: 600px;
+  border-left: 1px solid #e3e3e3;
+  border-right: 1px solid #e3e3e3;
+  padding: 10px;
+  background-color: #efefef;
+  box-shadow: 0px 0px 8px #888888;
+}
+
+.textcenter{
+	text-align:center;
+}
+
+.tweet {
+	padding-top: 10px
+}
+
+textarea: {
+	width: 100%; 
+	max-width: 100%;
+}
+
+</style>
+
+<script>
+
+function BindArray(a){
+    var _this = this;
+    this.array = a;   
+    this.observers = [];
+
+    this.Observe = function (notifyCallback){
+        _this.observers.push(notifyCallback);
+    }    
+
+    a.push = function(obj){
+        var push = Array.prototype.push.apply(a, arguments);        
+        for(var i = 0; i < _this.observers.length; i++) _this.observers[i](obj, "push");
+        return push;
+    }
+
+    a.pop = function(){
+        var popped = Array.prototype.pop.apply(a, arguments);        
+        for(var i = 0; i < _this.observers.length; i++) _this.observers[i](popped, "pop");
+        return popped;
+    }
+
+    a.reverse = function() {
+        var result = Array.prototype.reverse.apply(a, arguments);
+        for(var i = 0; i < _this.observers.length; i++) _this.observers[i](result, "reverse");
+        return result;
+    };
+
+    a.shift = function() {
+        var deleted_item = Array.prototype.shift.apply(a, arguments);
+        for(var i = 0; i < _this.observers.length; i++) _this.observers[i](deleted_item, "shift");
+        return deleted_item;                        
+    };
+
+    a.sort = function() {
+        var result = Array.prototype.sort.apply(a, arguments);
+        for(var i = 0; i < _this.observers.length; i++) _this.observers[i](result, "sort");
+        return result;
+    };
+
+    a.splice = function(i, length, itemsToInsert) {
+        var returnObj
+        if(itemsToInsert){
+            Array.prototype.splice.apply(a, arguments);
+            returnObj = itemsToInsert;
+			for(var i = 0; i < _this.observers.length; i++) _this.observers[i](returnObj, "spliceAdd");
+        }
+        else{
+            returnObj = Array.prototype.splice.apply(a, arguments);
+			for(var i = 0; i < _this.observers.length; i++) _this.observers[i](returnObj, "spliceRemove");
+        }
+        return returnObj;
+    };
+
+    a.unshift = function() {
+        var new_length = Array.prototype.unshift.apply(a, arguments);
+        for(var i = 0; i < _this.observers.length; i++) _this.observers[i](new_length, "unshift");
+        return arguments;
+    };
+                
+}
+
+function getGuid() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+        return v.toString(16);
+    });
+}
+
+function Binding(b) {
+    var _this = this
+    this.elementBindings = [];
+    this.value = b.object[b.property]
+    this.valueGetter = function(){
+        return _this.value;
+    }
+    this.valueSetter = function(val){
+        _this.value = val
+        for (var i = 0; i < _this.elementBindings.length; i++) {
+            var binding=_this.elementBindings[i]
+            binding.element[binding.attribute] = val
+        }
+    }
+    this.addBinding = function(element, attribute, event){
+        var binding = {
+            element: element,
+            attribute: attribute
+        }
+        if (event){
+            element.addEventListener(event, function(event){
+                _this.valueSetter(element[attribute]);
+            })
+            binding.event = event
+        }       
+        this.elementBindings.push(binding)
+        element[attribute] = _this.value
+        return _this
+    }
+
+    Object.defineProperty(b.object, b.property, {
+        get: this.valueGetter,
+        set: this.valueSetter
+    }); 
+
+    b.object[b.property] = this.value;
+}
+
+
+var settings;
+
+var fileHash = "";
+
+var tweets = [];
+var tweetOA = new BindArray(tweets)
+
+tweetOA.Observe(function(result, method){
+  switch(method){
+	case "push":
+	case "spliceAdd":
+		addTweet(result);
+		break;
+	case "spliceRemove":
+		for(var i = 0; i < result.length; i++){
+			document.getElementById(result[i].guid).remove();	
+		}
+		break;
+  }
+});
+
+function getIdx(guid){
+	for(var i = 0; i < tweets.length; i++){
+		if (tweets[i].guid == guid){
+			return i;
+		}
+	}
+	return -1;
+}
+
+function moveDown(guid){
+	var idx = getIdx(guid);
+	if(tweets.length - 1 != idx){
+		var tweet = tweets[idx];
+		tweets[idx] = tweets[idx+1];
+		tweets[idx+1] = tweet;
+		orderTweets();
+	}
+}
+
+function moveUp(guid){
+	var idx = getIdx(guid);
+	if(0 != idx){
+		var tweet = tweets[idx];
+		tweets[idx] = tweets[idx-1];
+		tweets[idx-1] = tweet;
+		orderTweets();
+	}
+}
+
+function addAfter(guid){
+	var idx = getIdx(guid) + 1;
+	var tweet =  {
+		category: "tech",
+		evergreen: false,
+		tweet: "",
+		guid: getGuid()
+	};
+	tweets.splice(idx,0,tweet);
+}
+
+function deleteTweet(guid){
+	var idx = getIdx(guid);
+	tweets.splice(idx,1);	
+}
+
+function orderTweets(){
+	var dg = document.getElementById("datagrid");
+	var cat = document.getElementById("categories-list").value;
+	for(var i = 0; i < tweets.length; i++){
+		var display = "none";
+		var tweetEle = document.getElementById(tweets[i].guid);
+		if (tweets[i].category == cat || cat == ""){
+			var display = "block";			
+		}
+		tweetEle.style.display = display;
+		dg.appendChild(tweetEle);	
+	}
+}
+
+function addTweet(tweet){
+	var selectList = "";
+	var catList = settings.categories.split(",");
+	
+	for(var j = 0; j < catList.length; j++){
+		selectList += `<option value="${catList[j].trim()}">${catList[j].trim()}</option>`;
+	}
+	var htmlStr = `<div class="grid" id="${tweet.guid}">
+		<div class="tweet">
+		<select id="${tweet.guid}-category">${selectList}</select>
+		Evergreen: <input type=checkbox id="${tweet.guid}-evergreen">
+		<a href="#" onclick="moveUp('${tweet.guid}')">[↑]</a>
+		<a href="#" onclick="moveDown('${tweet.guid}')">[↓]</a>
+		<a href="#" onclick="addAfter('${tweet.guid}')">[+]</a>
+		<a href="#" onclick="deleteTweet('${tweet.guid}')">[X]</a>				
+		</div>
+		<div>
+		<textarea style="width: 100%; max-width: 100%; height:100px;" id="${tweet.guid}-tweet"></textarea>
+		</div>
+		
+	</div>`;
+
+	var dg = document.getElementById("datagrid");
+	dg.insertAdjacentHTML("afterend",htmlStr);
+	new Binding({object: tweet,property: "category"}).addBinding(document.getElementById(`${tweet.guid}-category`), "value", "change");
+	new Binding({object: tweet,property: "evergreen"}).addBinding(document.getElementById(`${tweet.guid}-evergreen`), "checked", "change");
+	new Binding({object: tweet,property: "tweet"}).addBinding(document.getElementById(`${tweet.guid}-tweet`), "value", "keyup");		
+	
+	var idx = 0;
+
+	var tweetEle = document.getElementById(tweet.guid);
+	dg.appendChild(tweetEle);
+	
+	orderTweets();
+	
+
+}
+
+function editSettings(){
+	document.getElementById("datagrid").style.display = "none";
+	document.getElementById("settings").style.display = "block";
+}
+
+function saveAndReload(){
+	localStorage.setItem('settings', JSON.stringify(settings));
+	document.getElementById("datagrid").style.display = "block";
+	document.getElementById("settings").style.display = "none";	
+	init();
+}
+
+function bindSettings(){
+	new Binding({object: settings,property: "categories"}).addBinding(document.getElementById(`categories`), "value", "keyup");
+	new Binding({object: settings,property: "username"}).addBinding(document.getElementById(`username`), "value", "keyup");
+	new Binding({object: settings,property: "pw"}).addBinding(document.getElementById(`pw`), "value", "keyup");
+	new Binding({object: settings,property: "repo"}).addBinding(document.getElementById(`repo`), "value", "keyup");
+	new Binding({object: settings,property: "name"}).addBinding(document.getElementById(`name`), "value", "keyup");
+	new Binding({object: settings,property: "email"}).addBinding(document.getElementById(`email`), "value", "keyup");
+}
+
+function init(){
+	
+	for(var i = tweets.length -1; i >= 0; i--){
+		tweets.splice(0,1);
+	}
+	
+	if(localStorage.getItem("settings")){
+		settings = JSON.parse(localStorage.getItem('settings'))	
+		bindSettings();
+	}else{
+		settings = {
+			categories : "Category1, Category2",
+			username:"user",
+			pw : "ghp_abc123",
+			repo : "gh-twitter",
+			name : "John Doe",
+			email : "john.doe@example.com"		
+		}			
+		bindSettings();
+		editSettings();
+		return;
+	}
+	
+	var sel = document.getElementById("categories-list")
+	while (sel.length > 0) {
+		sel.remove(sel.length-1);
+	}	
+
+	var cats = settings.categories.split(",");
+	for(i = cats.length - 1; i >= 0; i--){
+		var option = document.createElement("option");
+		option.text = cats[i].trim();
+		option.value = cats[i].trim();
+		sel.add(option, sel[0]);
+	}
+	var option = document.createElement("option");
+	option.text = "All";
+	option.value = "";
+	sel.add(option, sel[0]);	
+	sel.selectedIndex = 0;
+	
+	
+	var headers = new Headers();
+	headers.set('Authorization', 'Basic ' + btoa(settings.username + ":" + settings.pw));
+
+	fetch(`https://api.github.com/repos/${settings.username}/${settings.repo}/contents/tweets.json`,{
+		headers: headers
+	})
+	  .then(response => response.json())
+	  .then(data => {
+		fileHash = data.sha;
+		var t = JSON.parse(atob(data.content));
+		for(var i = 0; i < t.length; i++){
+			tweets.push(t[i]);
+		}
+	  })
+      .catch(error => {
+		alert("Something bad happened. Check your settings and try again. \n\n" + error);
+		editSettings();
+      });
+
+}
+
+function filterTweets(){
+	orderTweets();
+}
+  
+async function writeCsv(){
+	
+	var upload = {
+		message: "Save Tweet JSON",
+		committer: {
+			name: settings.name,
+			email: settings.email
+		},
+		sha : fileHash,
+		content: btoa(JSON.stringify(tweets, null, 2))
+	}
+	
+	var headers = new Headers();
+	headers.set('Authorization', 'Basic ' + btoa(settings.username + ":" + settings.pw));	
+	headers.set('Content-Type', 'application/json');	
+		
+	fetch(`https://api.github.com/repos/${settings.username}/${settings.repo}/contents/tweets.json`,{
+		method: "PUT",
+		headers: headers,
+		body: JSON.stringify(upload)
+	})
+	  .then(response => response.json())
+	  .then(data => {
+		fileHash = data.content.sha;
+		alert("Changes Saved.")
+	  })
+      .catch(error => {
+		alert("Something bad happened. \n\n" + error);
+		editSettings();
+      });	  
+	
+}
+
+</script>
+
+
+<div class="center" id="content">
+<h3 class="textcenter" >GH Twitter Queue Manager</h3>
+<div id="datagrid" style="display:block">
+<div display="text-align:center"><button onclick="writeCsv()">Publish Changes</button><button onclick="editSettings()">Edit Settings</button><select onchange="filterTweets()" id="categories-list"></select></div>
+</div>
+	
+<div id="settings" style="display:none"> 
+<div display="text-align:center"><button onclick="saveAndReload()">Save and Reload</button></div>
+<p>Categories (Comma Serperated)</p>
+<div><input  style="width: 100%; max-width: 100%;" id="categories"></div>
+<p>GH User</p>
+<div><input  style="width: 100%; max-width: 100%;" id="username"></div>
+<p>GH PAT</p>
+<div><input  style="width: 100%; max-width: 100%;" id="pw"></div>
+<p>GH Repo</p>
+<div><input  style="width: 100%; max-width: 100%;" id="repo"></div>
+<p>Commit Name</p>
+<div><input  style="width: 100%; max-width: 100%;" id="name"></div>
+<p>Commit Email</p>
+<div><input  style="width: 100%; max-width: 100%;" id="email"></div>
+</div>
+
+</body>
+</html>

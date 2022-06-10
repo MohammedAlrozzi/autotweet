@@ -1,0 +1,36 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Lazy Tweeter Writing
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  schedule:
+    - cron:  '0 12,17 * * *'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  job1:
+    name: Post something to Twitter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2.3.2
+
+      - name: Post something to Twitter
+        env:
+          TW_CONSUMER_KEY: ${{ secrets.TW_CONSUMER_KEY}}
+          TW_CONSUMER_SECRET: ${{ secrets.TW_CONSUMER_SECRET }}
+          TW_ACCESS_TOKEN_KEY: ${{ secrets.TW_ACCESS_TOKEN_KEY }}
+          TW_ACCESS_TOKEN_SECRET: ${{ secrets.TW_ACCESS_TOKEN_SECRET }}
+        run: |          
+          npm install && node twitter.js writing
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "theonemule"
+          git config --global user.email "blaize@example.com"
+          git add -A
+          git commit -m "New Tweet"
+          git push          
