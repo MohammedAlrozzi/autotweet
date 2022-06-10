@@ -1,27 +1,31 @@
-### GH Twitter Queue Manager
+## GH Twitter Queue Manager
 
 This little project is the spiritual successor to a similar project I did to automatically update Twitter using an image from a queue that posts to my 365 site and my Twitter feed. This particular feed was to create a simple UI to manage my tweet queue directly on GH without needing any supporting services. This combines the GH API to manage the queue through a Web App and GH Actions to automate the posts to Twitter.
 
 The GUI for the application is in the `index.html`. The index.html can be hosted anywhere. All the dependencies are included in the index. html file, so move it to a web server and load it in a browser. The first time you run it, you'll need to configure it.
 
-
 Categories is a comma delimited list of categories.
 categories : "Category1, Category2"
 
 Your GH username used to log on.
-username:"user"
+
+**username:"user"**
 
 Your password is a [GH Pat Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token).
-pw : "ghp_abc123"
+
+**pw : "ghp_abc123"**
 
 The repo you wan to hosts this in.
-repo : "gh-twitter"
+
+**repo : "gh-twitter"**
 
 This is the name used on the commits from the apps.
-name : "John Doe"
+
+**name : "John Doe"**
 
 This is the email used on the commits from the apps.
-email : "john.doe@example.com"		
+
+**email : "john.doe@example.com"		**
 
 Also, include a file called `tweets.json` in the root of the target repo.
 
