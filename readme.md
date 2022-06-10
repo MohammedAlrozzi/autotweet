@@ -5,7 +5,8 @@ This little project is the spiritual successor to a similar project I did to aut
 The GUI for the application is in the `index.html`. The index.html can be hosted anywhere. All the dependencies are included in the index. html file, so move it to a web server and load it in a browser. The first time you run it, you'll need to configure it.
 
 Categories is a comma delimited list of categories.
-categories : "Category1, Category2"
+
+**categories : "Category1, Category2"**
 
 Your GH username used to log on.
 
@@ -25,7 +26,7 @@ This is the name used on the commits from the apps.
 
 This is the email used on the commits from the apps.
 
-**email : "john.doe@example.com"		**
+**email : "john.doe@example.com"**
 
 Also, include a file called `tweets.json` in the root of the target repo.
 
