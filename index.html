@@ -154,7 +154,6 @@ function Binding(b) {
     b.object[b.property] = this.value;
 }
 
-
 var settings;
 
 var fileHash = "";
@@ -249,10 +248,11 @@ function addTweet(tweet){
 		<a href="#" onclick="moveUp('${tweet.guid}')">[↑]</a>
 		<a href="#" onclick="moveDown('${tweet.guid}')">[↓]</a>
 		<a href="#" onclick="addAfter('${tweet.guid}')">[+]</a>
-		<a href="#" onclick="deleteTweet('${tweet.guid}')">[X]</a>				
+		<a href="#" onclick="deleteTweet('${tweet.guid}')">[X]</a>
+		# Chars: <span id="${tweet.guid}-charcount"></span>
 		</div>
 		<div>
-		<textarea style="width: 100%; max-width: 100%; height:100px;" id="${tweet.guid}-tweet"></textarea>
+		<textarea style="width: 100%; max-width: 100%; height:100px;" id="${tweet.guid}-tweet" onkeyup="updateCount('${tweet.guid}')" onchange="updateCount('${tweet.guid}')"></textarea>
 		</div>
 		
 	</div>`;
@@ -262,6 +262,8 @@ function addTweet(tweet){
 	new Binding({object: tweet,property: "category"}).addBinding(document.getElementById(`${tweet.guid}-category`), "value", "change");
 	new Binding({object: tweet,property: "evergreen"}).addBinding(document.getElementById(`${tweet.guid}-evergreen`), "checked", "change");
 	new Binding({object: tweet,property: "tweet"}).addBinding(document.getElementById(`${tweet.guid}-tweet`), "value", "keyup");		
+	
+	updateCount(tweet.guid);
 	
 	var idx = 0;
 
@@ -392,6 +394,10 @@ async function writeCsv(){
 		editSettings();
       });	  
 	
+}
+
+function updateCount(guid){
+	document.getElementById(guid + "-charcount").innerHTML = document.getElementById(guid + "-tweet").value.length;
 }
 
 </script>
