@@ -204,15 +204,21 @@ function moveUp(guid){
 	}
 }
 
-function addAfter(guid){
-	var idx = getIdx(guid) + 1;
+function add(idx){
+	var cat = document.getElementById("categories-list").value;
+	if(cat == "") cat = "tech";
 	var tweet =  {
-		category: "tech",
+		category: cat,
 		evergreen: false,
 		tweet: "",
 		guid: getGuid()
 	};
 	tweets.splice(idx,0,tweet);
+}
+
+function addAfter(guid){
+	var idx = getIdx(guid) + 1;
+	add(idx);
 }
 
 function deleteTweet(guid){
@@ -237,18 +243,30 @@ function orderTweets(){
 function addTweet(tweet){
 	var selectList = "";
 	var catList = settings.categories.split(",");
+	for(var i = 0; i < catList.length; i++){
+		catList[i] = catList[i].trim();
+	}
+
+	
+	if (!catList.includes(tweet.category)){
+		catList.push(tweet.category);
+		settings.categories = catList.join(",");
+		localStorage.setItem('settings', JSON.stringify(settings));
+		initCategories();
+	}	
 	
 	for(var j = 0; j < catList.length; j++){
 		selectList += `<option value="${catList[j].trim()}">${catList[j].trim()}</option>`;
 	}
+
 	var htmlStr = `<div class="grid" id="${tweet.guid}">
 		<div class="tweet">
 		<select id="${tweet.guid}-category">${selectList}</select>
 		Evergreen: <input type=checkbox id="${tweet.guid}-evergreen">
-		<a href="#" onclick="moveUp('${tweet.guid}')">[↑]</a>
-		<a href="#" onclick="moveDown('${tweet.guid}')">[↓]</a>
-		<a href="#" onclick="addAfter('${tweet.guid}')">[+]</a>
-		<a href="#" onclick="deleteTweet('${tweet.guid}')">[X]</a>
+		<a href="#" onclick="moveUp('${tweet.guid}')">⬆️</a>
+		<a href="#" onclick="moveDown('${tweet.guid}')">⬇️</a>
+		<a href="#" onclick="addAfter('${tweet.guid}')">➕</a>
+		<a href="#" onclick="deleteTweet('${tweet.guid}')">✖️</a>
 		# Chars: <span id="${tweet.guid}-charcount"></span>
 		</div>
 		<div>
@@ -296,29 +314,7 @@ function bindSettings(){
 	new Binding({object: settings,property: "email"}).addBinding(document.getElementById(`email`), "value", "keyup");
 }
 
-function init(){
-	
-	for(var i = tweets.length -1; i >= 0; i--){
-		tweets.splice(0,1);
-	}
-	
-	if(localStorage.getItem("settings")){
-		settings = JSON.parse(localStorage.getItem('settings'))	
-		bindSettings();
-	}else{
-		settings = {
-			categories : "Category1, Category2",
-			username:"user",
-			pw : "ghp_abc123",
-			repo : "gh-twitter",
-			name : "John Doe",
-			email : "john.doe@example.com"		
-		}			
-		bindSettings();
-		editSettings();
-		return;
-	}
-	
+function initCategories(){
 	var sel = document.getElementById("categories-list")
 	while (sel.length > 0) {
 		sel.remove(sel.length-1);
@@ -336,6 +332,34 @@ function init(){
 	option.value = "";
 	sel.add(option, sel[0]);	
 	sel.selectedIndex = 0;
+}
+
+function init(){
+	
+	for(var i = tweets.length -1; i >= 0; i--){
+		tweets.splice(0,1);
+	}
+
+	if(localStorage.getItem("settings")){
+		settings = JSON.parse(localStorage.getItem('settings'))	
+		bindSettings();
+	}else{
+		settings = {
+			categories : "Category1, Category2",
+			username:"user",
+			pw : "ghp_abc123",
+			repo : "gh-twitter",
+			name : "John Doe",
+			email : "john.doe@example.com"		
+		}			
+		bindSettings();
+		editSettings();
+		return;
+	}
+	
+	initCategories();
+	
+
 	
 	
 	var headers = new Headers();
@@ -406,7 +430,7 @@ function updateCount(guid){
 <div class="center" id="content">
 <h3 class="textcenter" >GH Twitter Queue Manager</h3>
 <div id="datagrid" style="display:block">
-<div display="text-align:center"><button onclick="writeCsv()">Publish Changes</button><button onclick="editSettings()">Edit Settings</button><select onchange="filterTweets()" id="categories-list"></select></div>
+<div display="text-align:center"><button onclick="writeCsv()">Publish Changes</button><button onclick="editSettings()">Edit Settings</button><select onchange="filterTweets()" id="categories-list"></select><button onclick="add(0)">Add Tweet</button></div>
 </div>
 	
 <div id="settings" style="display:none"> 
