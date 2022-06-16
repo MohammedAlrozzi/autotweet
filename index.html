@@ -263,10 +263,10 @@ function addTweet(tweet){
 		<div class="tweet">
 		<select id="${tweet.guid}-category">${selectList}</select>
 		Evergreen: <input type=checkbox id="${tweet.guid}-evergreen">
-		<a href="#" onclick="moveUp('${tweet.guid}')">⬆️</a>
-		<a href="#" onclick="moveDown('${tweet.guid}')">⬇️</a>
-		<a href="#" onclick="addAfter('${tweet.guid}')">➕</a>
-		<a href="#" onclick="deleteTweet('${tweet.guid}')">✖️</a>
+		<a onclick="moveUp('${tweet.guid}')">⬆️</a>
+		<a onclick="moveDown('${tweet.guid}')">⬇️</a>
+		<a onclick="addAfter('${tweet.guid}')">➕</a>
+		<a onclick="deleteTweet('${tweet.guid}')">✖️</a>
 		# Chars: <span id="${tweet.guid}-charcount"></span>
 		</div>
 		<div>
