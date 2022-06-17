@@ -11,6 +11,10 @@ a:visited { text-decoration: none; }
 a:hover { text-decoration: none; }
 a:active { text-decoration: none; }	
 
+a{
+	cursor: default;
+}
+
 .grid {
 	vertical-align: top;
 }
@@ -263,10 +267,10 @@ function addTweet(tweet){
 		<div class="tweet">
 		<select id="${tweet.guid}-category">${selectList}</select>
 		Evergreen: <input type=checkbox id="${tweet.guid}-evergreen">
-		<a onclick="moveUp('${tweet.guid}')">⬆️</a>
-		<a onclick="moveDown('${tweet.guid}')">⬇️</a>
-		<a onclick="addAfter('${tweet.guid}')">➕</a>
-		<a onclick="deleteTweet('${tweet.guid}')">✖️</a>
+		<a onclick="moveUp('${tweet.guid}')">&#x1F53C;</a>
+		<a onclick="moveDown('${tweet.guid}')">&#x1F53D;</a>
+		<a onclick="addAfter('${tweet.guid}')">&#x2795;</a>
+		<a onclick="deleteTweet('${tweet.guid}')">&#x274E;</a>
 		# Chars: <span id="${tweet.guid}-charcount"></span>
 		</div>
 		<div>
